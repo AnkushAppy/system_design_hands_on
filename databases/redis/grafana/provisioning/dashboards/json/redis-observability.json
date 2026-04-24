@@ -1,0 +1,221 @@
+{
+  "uid": "redis-observability",
+  "title": "Redis, LB, App & cAdvisor",
+  "tags": ["redis", "prometheus", "cadvisor"],
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Redis (process metrics via redis_exporter)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Memory: used & max (bytes)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "redis_memory_used_bytes", "legendFormat": "used" },
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "B", "expr": "redis_memory_max_bytes", "legendFormat": "max (maxmemory)" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Key counts (db0)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" } },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "redis_db_keys{db=\"db0\"}", "legendFormat": "total keys" },
+        { "refId": "B", "expr": "redis_db_keys_expiring{db=\"db0\"}", "legendFormat": "with TTL" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Evictions & expired keys (per second)",
+      "description": "Evictions depend on maxmemory-policy (e.g. allkeys-lru).",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "ops" } },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "rate(redis_evicted_keys_total[1m])", "legendFormat": "evicted/s" },
+        { "refId": "B", "expr": "rate(redis_expired_keys_total[1m])", "legendFormat": "expired/s" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Keyspace hit / miss (per second)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "ops" } },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 8 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "rate(redis_keyspace_hits_total[1m])", "legendFormat": "hits/s" },
+        { "refId": "B", "expr": "rate(redis_keyspace_misses_total[1m])", "legendFormat": "misses/s" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Connected clients",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" } },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 8 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "redis_connected_clients", "legendFormat": "clients" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Commands processed (per second)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "ops" } },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 8 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "rate(redis_commands_processed_total[1m])", "legendFormat": "cmd/s" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Memory fragmentation ratio",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "none" } },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 15 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "redis_mem_fragmentation_ratio", "legendFormat": "ratio" }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Network I/O (bytes/s)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "Bps" } },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 15 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "rate(redis_net_input_bytes_total[1m])", "legendFormat": "in" },
+        { "refId": "B", "expr": "rate(redis_net_output_bytes_total[1m])", "legendFormat": "out" }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Redis process CPU (cores used, ~0–1 per thread)",
+      "description": "Sum of system + user CPU time rates from INFO.",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "none" } },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 15 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "rate(redis_cpu_sys_seconds_total[1m])", "legendFormat": "sys" },
+        { "refId": "B", "expr": "rate(redis_cpu_user_seconds_total[1m])", "legendFormat": "user" }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Redis container (cAdvisor — Docker host CPU/RAM)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Container memory (working set)",
+      "description": "cAdvisor. If empty, check the cadvisor service is up. Try Explore with container_label_com_docker_compose_service=redis.",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 23 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "container_memory_working_set_bytes{container_label_com_docker_compose_service=\"redis\"}", "legendFormat": "workingset" }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Container CPU (cores)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "none" } },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 23 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=\"redis\", container!=\"POD\"}[1m]))", "legendFormat": "cpu" }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Load balancer & app",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Nginx: active connections & req/s",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 31 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "nginx_connections_active", "legendFormat": "active" },
+        { "refId": "B", "expr": "rate(nginx_http_requests_total[1m])", "legendFormat": "req/s" }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "App HTTP request rate (by path)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 31 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (path) (rate(http_requests_total[1m]))" }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Scrape health (up)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "min": 0, "max": 1 } },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 38 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "up", "legendFormat": "{{job}} {{instance}}" }
+      ]
+    }
+  ]
+}

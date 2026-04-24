@@ -1,0 +1,49 @@
+# Repo-wide ignores — applies to all subfolders (Python venvs, caches, OS junk, etc.)
+
+# Python
+**/.venv/
+**/venv/
+**/.Python/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/.eggs/
+**/dist/
+**/build/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+
+# Virtualenv / pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment & local secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs (uncomment if you do not commit shared editor config)
+# .vscode/
+# .idea/
+
+# Logs & temp
+*.log
+*.tmp
+*.temp
+*~
+
+# Generated metrics artifacts (from export/chart scripts in subprojects)
+**/metrics/exports/**/*.json
+**/metrics/charts/*.png
+**/metrics/charts/*.svg
+
+# JavaScript / Node (future subprojects)
+**/node_modules/
+
+# Docker
+*.orig

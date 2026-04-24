@@ -1,0 +1,10 @@
+metrics/exports/**/*.json
+!metrics/exports/**/.gitkeep
+metrics/charts/*.png
+metrics/charts/*.svg
+__pycache__/
+*.pyc
+.venv/
+venv/
+scripts/.venv/
+*.egg-info/

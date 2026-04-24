@@ -1,0 +1,5 @@
+# Run Locust on the host (outside Docker), e.g.:
+#   pip install -r requirements.txt
+#   export TARGET_HOST=http://127.0.0.1:8080
+#   locust -f locust/locustfile.py
+locust==2.31.5

@@ -1,0 +1,352 @@
+# Redis Cluster (6 nodes: 3 masters + 3 replicas), LB, apps, Prometheus, Grafana, cAdvisor, Locust.
+# Host ports differ from databases/redis so both stacks can run: LB 8180, Prom 9190, Grafana 3100, etc.
+
+services:
+  redis-1:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --cluster-announce-ip
+      - "172.29.0.11"
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-announce-bus-port
+      - "16379"
+    volumes:
+      - redis-1-data:/data
+    networks:
+      cluster-net:
+        ipv4_address: 172.29.0.11
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  redis-2:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --cluster-announce-ip
+      - "172.29.0.12"
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-announce-bus-port
+      - "16379"
+    volumes:
+      - redis-2-data:/data
+    networks:
+      cluster-net:
+        ipv4_address: 172.29.0.12
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  redis-3:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --cluster-announce-ip
+      - "172.29.0.13"
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-announce-bus-port
+      - "16379"
+    volumes:
+      - redis-3-data:/data
+    networks:
+      cluster-net:
+        ipv4_address: 172.29.0.13
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  redis-4:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --cluster-announce-ip
+      - "172.29.0.14"
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-announce-bus-port
+      - "16379"
+    volumes:
+      - redis-4-data:/data
+    networks:
+      cluster-net:
+        ipv4_address: 172.29.0.14
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  redis-5:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --cluster-announce-ip
+      - "172.29.0.15"
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-announce-bus-port
+      - "16379"
+    volumes:
+      - redis-5-data:/data
+    networks:
+      cluster-net:
+        ipv4_address: 172.29.0.15
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  redis-6:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --cluster-announce-ip
+      - "172.29.0.16"
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-announce-bus-port
+      - "16379"
+    volumes:
+      - redis-6-data:/data
+    networks:
+      cluster-net:
+        ipv4_address: 172.29.0.16
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  cluster-init:
+    image: redis:7-alpine
+    volumes:
+      - ./scripts/cluster-init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    depends_on:
+      redis-1:
+        condition: service_healthy
+      redis-2:
+        condition: service_healthy
+      redis-3:
+        condition: service_healthy
+      redis-4:
+        condition: service_healthy
+      redis-5:
+        condition: service_healthy
+      redis-6:
+        condition: service_healthy
+    networks:
+      cluster-net: {}
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.66.0
+    # Empty addr: actual Redis targets come from Prometheus /scrape?target=...
+    command:
+      - --redis.addr=
+    networks:
+      cluster-net: {}
+    depends_on:
+      redis-1:
+        condition: service_healthy
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    privileged: true
+    ports:
+      - "8181:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      cluster-net: {}
+
+  app-1:
+    build:
+      context: ./app
+    environment:
+      REDIS_CLUSTER_NODES: "redis-1:6379,redis-2:6379,redis-3:6379,redis-4:6379,redis-5:6379,redis-6:6379"
+      APP_INSTANCE: "app-1"
+    depends_on:
+      cluster-init:
+        condition: service_completed_successfully
+    networks:
+      cluster-net: {}
+
+  app-2:
+    build:
+      context: ./app
+    environment:
+      REDIS_CLUSTER_NODES: "redis-1:6379,redis-2:6379,redis-3:6379,redis-4:6379,redis-5:6379,redis-6:6379"
+      APP_INSTANCE: "app-2"
+    depends_on:
+      cluster-init:
+        condition: service_completed_successfully
+    networks:
+      cluster-net: {}
+
+  load-balancer:
+    image: nginx:1.25-alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8180:80"
+    depends_on:
+      - app-1
+      - app-2
+    networks:
+      cluster-net: {}
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    command:
+      - -nginx.scrape-uri
+      - http://load-balancer:80/nginx_status
+    ports:
+      - "9114:9113"
+    depends_on:
+      - load-balancer
+    networks:
+      cluster-net: {}
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9190:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - redis-exporter
+      - cadvisor
+      - app-1
+      - app-2
+      - nginx-exporter
+    networks:
+      cluster-net: {}
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_DEFAULT_THEME: dark
+    ports:
+      - "3100:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      cluster-net: {}
+
+  locust:
+    image: locustio/locust:2.31.5
+    command:
+      - -f
+      - /mnt/locust/locustfile.py
+    ports:
+      - "8189:8089"
+    volumes:
+      - ./locust:/mnt/locust:ro
+    environment:
+      TARGET_HOST: "http://load-balancer:80"
+    depends_on:
+      - load-balancer
+    networks:
+      cluster-net: {}
+
+volumes:
+  redis-1-data:
+  redis-2-data:
+  redis-3-data:
+  redis-4-data:
+  redis-5-data:
+  redis-6-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/16

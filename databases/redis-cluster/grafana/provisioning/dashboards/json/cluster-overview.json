@@ -1,0 +1,156 @@
+{
+  "uid": "redis-cluster-overview",
+  "title": "Redis Cluster + LB + App",
+  "tags": ["redis", "cluster", "prometheus"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Redis (per node — redis_exporter instance label)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Memory used by node (bytes)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (instance) (redis_memory_used_bytes)", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Keys (db0) by node",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" } },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (instance) (redis_db_keys{db=\"db0\"})", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Cluster: slots / epoch (if exported)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 8 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (instance) (redis_cluster_slots_assigned)", "legendFormat": "slots {{instance}}" },
+        { "refId": "B", "expr": "sum by (instance) (redis_cluster_current_epoch)", "legendFormat": "epoch {{instance}}" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Commands / sec (sum across nodes)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "ops" } },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 8 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(redis_commands_processed_total[1m]))", "legendFormat": "total cmd/s" }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Sample node container (redis-1) — cAdvisor",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "redis-1 container memory (working set)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 16 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "container_memory_working_set_bytes{container_label_com_docker_compose_service=\"redis-1\", container_label_com_docker_compose_project=\"redis-cluster\"}",
+          "legendFormat": "workingset"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "redis-1 container CPU (cores)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "none" } },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 16 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=\"redis-1\", container_label_com_docker_compose_project=\"redis-cluster\", container!=\"POD\"}[1m]))",
+          "legendFormat": "cpu"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Load balancer & app",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Nginx: active connections & req/s",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 24 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "nginx_connections_active", "legendFormat": "active" },
+        { "refId": "B", "expr": "rate(nginx_http_requests_total[1m])", "legendFormat": "req/s" }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "App HTTP request rate (by path)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 24 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (path) (rate(http_requests_total[1m]))" }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Scrape health (up)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "min": 0, "max": 1 } },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 31 },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [
+        { "refId": "A", "expr": "up", "legendFormat": "{{job}} {{instance}}" }
+      ]
+    }
+  ]
+}

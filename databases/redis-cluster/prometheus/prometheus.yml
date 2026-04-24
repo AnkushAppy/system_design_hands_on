@@ -1,0 +1,49 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-1:8000", "app-2:8000"]
+        labels:
+          service: "api"
+
+  # One redis_exporter; each scrape uses /scrape?target=redis://IP:6379
+  - job_name: "redis-cluster-nodes"
+    metrics_path: /scrape
+    static_configs:
+      - targets:
+          - 172.29.0.11:6379
+          - 172.29.0.12:6379
+          - 172.29.0.13:6379
+          - 172.29.0.14:6379
+          - 172.29.0.15:6379
+          - 172.29.0.16:6379
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "(.+)"
+        replacement: "redis://${1}"
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: redis-exporter:9121
+
+  - job_name: "cadvisor"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels:
+          service: "containers"
+
+  - job_name: "nginx-exporter"
+    static_configs:
+      - targets: ["nginx-exporter:9113"]
+        labels:
+          service: "load-balancer"
