@@ -1,0 +1,99 @@
+{
+  "rooms": {
+    "living room": {
+      "light": false
+    },
+    "bedroom": {
+      "light": false
+    },
+    "kitchen": {
+      "light": false
+    }
+  },
+  "doors": {
+    "front door": true,
+    "back door": true
+  },
+  "thermostats": {
+    "living room": 70.0
+  },
+  "security_system": false,
+  "logs": [
+    {
+      "action": "Light in living room turned off",
+      "timestamp": "2026-04-26T03:10:13.842294"
+    },
+    {
+      "action": "Light in bedroom turned on",
+      "timestamp": "2026-04-26T03:10:13.842833"
+    },
+    {
+      "action": "Door front door locked",
+      "timestamp": "2026-04-26T03:10:17.607321"
+    },
+    {
+      "action": "Thermostat for living room set to 72.0\u00b0F",
+      "timestamp": "2026-04-26T03:10:17.609238"
+    },
+    {
+      "action": "Light in kitchen turned on",
+      "timestamp": "2026-04-26T03:10:35.224607"
+    },
+    {
+      "action": "Light in kitchen turned on",
+      "timestamp": "2026-04-26T03:10:53.341822"
+    },
+    {
+      "action": "Light in living room turned on",
+      "timestamp": "2026-04-26T03:10:53.342313"
+    },
+    {
+      "action": "Door front door unlocked",
+      "timestamp": "2026-04-26T03:10:53.342857"
+    },
+    {
+      "action": "Light in bedroom turned on",
+      "timestamp": "2026-04-26T03:10:53.343184"
+    },
+    {
+      "action": "Thermostat for living room set to 70.0\u00b0F",
+      "timestamp": "2026-04-26T03:10:53.343791"
+    },
+    {
+      "action": "Light in living room turned off",
+      "timestamp": "2026-04-26T03:24:06.565539"
+    },
+    {
+      "action": "Light in bedroom turned on",
+      "timestamp": "2026-04-26T03:24:06.566310"
+    },
+    {
+      "action": "Light in bedroom turned off",
+      "timestamp": "2026-04-26T03:24:13.762505"
+    },
+    {
+      "action": "Light in living room turned off",
+      "timestamp": "2026-04-26T03:24:13.763850"
+    },
+    {
+      "action": "Door front door locked",
+      "timestamp": "2026-04-26T03:25:07.518056"
+    },
+    {
+      "action": "Light in bedroom turned off",
+      "timestamp": "2026-04-26T03:25:07.519070"
+    },
+    {
+      "action": "Light in kitchen turned off",
+      "timestamp": "2026-04-26T03:25:07.519634"
+    },
+    {
+      "action": "Light in living room turned off",
+      "timestamp": "2026-04-26T03:25:07.520474"
+    },
+    {
+      "action": "Door back door locked",
+      "timestamp": "2026-04-26T03:25:07.521107"
+    }
+  ]
+}

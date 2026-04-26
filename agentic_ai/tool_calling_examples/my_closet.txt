@@ -1,0 +1,27 @@
+# My Closet Inventory
+# Format: item_name:category:warmth(1-10):notes
+# Warmth scale: 1=very light, 10=very warm
+
+# Tops
+cotton_tshirt:top:2:Light summer shirt
+linen_shirt:top:2:Breezy for hot days
+wool_sweater:top:7:Great for cold weather
+fleece_jacket:top:5:Medium warmth
+
+# Outerwear
+denim_jacket:outerwear:4:Light layer
+windbreaker:outerwear:3:Wind resistant
+puffer_jacket:outerwear:8:Very warm, for freezing temps
+raincoat:outerwear:4:Waterproof
+
+# Bottoms
+khaki_pants:bottom:3:Business casual
+jeans:bottom:4:Denim, medium warmth
+sweatpants:bottom:5:Warm and comfy
+wool_trousers:bottom:6:Formal cold weather
+
+# Accessories
+wool_scarf:accessory:3:Neck warmth
+beanie:accessory:2:Head warmth
+gloves:accessory:2:Hand warmth
+umbrella:accessory:1:Rain protection

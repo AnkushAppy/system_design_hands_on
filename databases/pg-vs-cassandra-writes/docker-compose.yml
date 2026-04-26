@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lab
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - pg-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [lab-net]
+
+  cassandra:
+    image: cassandra:4.1
+    environment:
+      JVM_OPTS: "-Xms512m -Xmx512m"
+      MAX_HEAP_SIZE: "512M"
+      HEAP_NEWSIZE: "128M"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    ports:
+      - "9043:9042"
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN'"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 90s
+    networks: [lab-net]
+
+  cassandra-init:
+    image: cassandra:4.1
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./cassandra/schema.cql:/schema.cql:ro
+    entrypoint: ["/bin/sh", "-c", "cqlsh cassandra -f /schema.cql"]
+    networks: [lab-net]
+    restart: "no"
+
+  api:
+    build:
+      context: ./app
+    ports:
+      - "8280:8000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/lab"
+      CASSANDRA_HOSTS: "cassandra"
+      CASSANDRA_KEYSPACE: "lab"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
+      cassandra-init:
+        condition: service_completed_successfully
+    networks: [lab-net]
+
+  locust:
+    image: locustio/locust:2.31.5
+    ports:
+      - "8289:8089"
+    volumes:
+      - ./locust:/mnt/locust:ro
+    environment:
+      TARGET_HOST: "http://api:8000"
+    command:
+      - -f
+      - /mnt/locust/locustfile.py
+    depends_on:
+      - api
+    networks: [lab-net]
+
+volumes:
+  pg-data:
+  cassandra-data:
+
+networks:
+  lab-net:
+    driver: bridge

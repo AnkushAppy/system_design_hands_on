@@ -12,6 +12,7 @@ Hands-on exercises and reference stacks for **system design** topics: runnable s
 |------|-------------|------|
 | [**`databases/redis`**](databases/redis/) | Docker Compose stack: Nginx LB, FastAPI apps, single Redis, Prometheus, Grafana, cAdvisor, Locust; metrics export & chart scripts | [What & why](databases/redis/README.md) · [How to run](databases/redis/SETUP.md) |
 | [**`databases/redis-cluster`**](databases/redis-cluster/) | Same HTTP/LB/app/observability pattern with **6-node Redis Cluster** (3 primaries + 3 replicas), multi-target `redis_exporter`, cluster bootstrap job | [What & why](databases/redis-cluster/README.md) · [How to run](databases/redis-cluster/SETUP.md) |
+| [**`databases/pg-vs-cassandra-writes`**](databases/pg-vs-cassandra-writes/) | Single API: **`POST /pg/events`** vs **`POST /cassandra/events`**, Locust write stress (B-tree vs LSM intuition) | [What & why](databases/pg-vs-cassandra-writes/README.md) · [How to run](databases/pg-vs-cassandra-writes/SETUP.md) |
 
 ---
 

@@ -1,0 +1,15 @@
+---
+description: LangChain 1.2, LangGraph 1.1, deepagents 0.5, LCEL
+alwaysApply: true
+---
+
+# Stack versions (target)
+
+- **langchain** `v1.2.0` — use 1.2.x APIs and docs; avoid pre-1.x / legacy 0.2-style imports and patterns.
+- **langgraph** `v1.1` — for stateful, multi-step agents (prefer over legacy `AgentExecutor`; do not add new `AgentExecutor`-based agents except when maintaining old code).
+- **deepagents** `v0.5.0` — when the task fits deep agent patterns, align with 0.5.x APIs and examples.
+
+# Chains and composition
+
+- Use **LCEL (LangChain Expression Language)** for all chains: compose with `|`, `RunnableSequence`, and `pipe`-style building blocks instead of the older `LLMChain` / `SimpleSequentialChain` style.
+- When adding tools or retrievers, wire them through Runnable/LCEL or LangGraph nodes, consistent with the versions above.
