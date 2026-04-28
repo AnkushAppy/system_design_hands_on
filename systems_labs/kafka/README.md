@@ -4,12 +4,12 @@ A hands-on, step-by-step journey to understand how Apache Kafka works by buildin
 
 ## Overview
 
-This repository walks through the core ideas behind Kafka by implementing progressively more sophisticated versions of a message broker. By the end, you'll understand partitions, replication, indexing, and fault tolerance — and you'll see how the real Kafka stores data on disk.
+This repository walks through the core ideas behind Kafka by implementing progressively more sophisticated versions of a message broker. By the end, you'll understand partitions, replication, indexing, fault tolerance — plus **consumer groups**, **compacted topics**, **Schema Registry payloads**, and **consumer lag operations** — and you'll see how the real Kafka stores data on disk.
 
 ## Prerequisites
 
 - Python 3.8+
-- Docker and Docker Compose (for Chapters 6 and 7)
+- Docker and Docker Compose (for Chapter 6 onward in the `"real Kafka"` labs)
 
 ## Quick Start
 
@@ -211,6 +211,139 @@ python consumer_verify.py
 
 ---
 
+### Chapter 8: Consumer Groups (`chapter_8_consumer_groups/`)
+
+**Recommended after Chapter 7.** Run multiple consumers with the **same `group.id`**: Kafka assigns **partitions**, not duplicates, inside the group — that is horizontal scale-out for consuming.
+
+See:
+
+```bash
+cd chapter_8_consumer_groups
+docker compose up -d
+pip install -r requirements.txt
+python setup_topic.py
+python producer_fanout.py
+# Two terminals — same group:
+python consumer_in_group.py --group-id demo-workers --member A --from earliest
+python consumer_in_group.py --group-id demo-workers --member B --from earliest
+```
+
+---
+
+### Chapter 10: Log Compaction (`chapter_10_compaction/`)
+
+**Recommended after Chapter 8.** Topics with **`cleanup.policy=compact`** keep the **latest value per key** (subject to cleaner timing), turning a changelog into a keyed “latest truth” store.
+
+```bash
+cd chapter_10_compaction
+docker compose up -d
+pip install -r requirements.txt
+python compaction_demo.py
+```
+
+---
+
+### Chapter 12: Schema Registry + Avro (`chapter_12_schema_registry/`)
+
+**Recommended after Chapter 10.** Registers Avro schemas in **Schema Registry**, then produces/consumes with the **`confluent-kafka`** client (wired serializers).
+
+```bash
+cd chapter_12_schema_registry
+docker compose up -d
+pip install -r requirements.txt   # installs confluent-kafka + certifi
+python avro_producer.py
+python avro_consumer.py
+curl http://localhost:8081/subjects
+```
+
+---
+
+### Chapter 9: Lag & Operations (`chapter_9_lag_ops/`)
+
+**Recommended last in this arc.** Burst-produce vs slow-consume and read **`TOTAL-LAG`** from `kafka-consumer-groups` — the main operational KPI for pipelines.
+
+```bash
+cd chapter_9_lag_ops
+docker compose up -d
+pip install -r requirements.txt
+python setup_lag_topic.py
+# Terminal A: python slow_consume.py
+# Terminal B: python burst_produce.py 20000
+# Terminal C: ./check_lag.sh
+```
+
+---
+
+### Chapter 14: Ordering Guarantees (`chapter_14_ordering/`)
+
+Demonstrates Kafka's real ordering scope:
+
+- ordering is guaranteed **within a partition**
+- same key typically maps to one partition -> per-key ordering
+- multiple producers can interleave writes for the same key
+
+```bash
+cd chapter_14_ordering
+docker compose up -d
+pip install -r requirements.txt
+python ordering_demo.py --mode single --key account_42 --count 30
+python ordering_demo.py --mode dual --key account_42 --count 30
+```
+
+---
+
+### Chapter 15: Poison Messages + DLQ (`chapter_15_dlq/`)
+
+Covers bad-record handling patterns:
+
+- `skip` mode: ignore invalid records and continue
+- `dlq` mode: publish failed records + error metadata to `orders_dlq`
+
+```bash
+cd chapter_15_dlq
+docker compose up -d
+pip install -r requirements.txt
+python dlq_demo.py --action setup
+python dlq_demo.py --action produce
+python dlq_demo.py --action consume --mode dlq
+python read_dlq.py
+```
+
+---
+
+### Chapter 16: Kafka Connect (`chapter_16_connect/`)
+
+Uses built-in file source/sink connectors to show Kafka as an integration hub:
+
+```bash
+cd chapter_16_connect
+docker compose up -d
+bash register_connectors.sh
+cat ./connect-data/sink.txt
+```
+
+---
+
+### Chapter 17: ksqlDB (`chapter_17_ksqldb/`)
+
+Adds stream processing with SQL semantics:
+
+```bash
+cd chapter_17_ksqldb
+docker compose up -d
+pip install -r requirements.txt
+bash create_pipeline.sh
+python produce_clicks.py 300
+```
+
+---
+
+### Suggested arc (beyond Chapters 1–7)
+
+`8 consumer groups → 10 compaction → 12 schema registry → 9 lag/ops → 14 ordering → 15 DLQ → 16 Connect → 17 ksqlDB`.
+
+---
+
 ## How the Concepts Build on Each Other
 
 | Chapter | Adds | Why It Matters |
@@ -222,6 +355,14 @@ python consumer_verify.py
 | 5 | Index files | Fast random access into huge logs (O(log n) instead of O(n)) |
 | 6 | Real Kafka | Same concepts, production-grade implementation |
 | 7 | Replication + Acks | Fault tolerance and durability guarantees |
+| 8 | Consumer groups | Cooperative partition assignment across processes |
+| 10 | Compaction | Keyed changelog semantics (“latest truth” per key) |
+| 12 | Schema Registry | Contracts + evolution for payloads |
+| 9 | Consumer lag (`kafka-consumer-groups`) | Operations: backlog and throughput diagnosis |
+| 14 | Ordering and key behavior | Clarifies per-partition ordering guarantees and failure modes |
+| 15 | DLQ pattern | Operational handling of poison messages |
+| 16 | Kafka Connect | Declarative data movement between Kafka and external systems |
+| 17 | ksqlDB | Stream processing with SQL over Kafka topics |
 
 ## Common Patterns Across All Chapters
 
@@ -288,17 +429,50 @@ docker kill broker-2
 python consumer_verify.py
 ```
 
+### Chapters 8, 10, 12, 9, 14, 15, 16 & 17 (Docker + Python)
+
+See each folder README for precise commands (`setup_*.py`, producers, consumers, `docker compose`). Shortcuts:
+
+```bash
+# 8 — consumer groups & rebalance demos
+cd chapter_8_consumer_groups && docker compose up -d && pip install -r requirements.txt
+
+# 10 — compaction
+cd chapter_10_compaction && docker compose up -d && pip install -r requirements.txt
+
+# 12 — Schema Registry + Avro (`confluent-kafka`)
+cd chapter_12_schema_registry && docker compose up -d && pip install -r requirements.txt
+
+# 9 — burst vs slow consume + lag describe
+cd chapter_9_lag_ops && docker compose up -d && pip install -r requirements.txt
+
+# 14 — ordering guarantees
+cd chapter_14_ordering && docker compose up -d && pip install -r requirements.txt
+
+# 15 — poison messages + DLQ
+cd chapter_15_dlq && docker compose up -d && pip install -r requirements.txt
+
+# 16 — Kafka Connect
+cd chapter_16_connect && docker compose up -d
+
+# 17 — ksqlDB stream processing
+cd chapter_17_ksqldb && docker compose up -d && pip install -r requirements.txt
+```
+
+Tip: Stop any other Compose stack bound to `:9092` before starting the next chapter (each lab uses localhost `9092` by default).
+
 ## Cleanup
 
 ```bash
-# Python chapters: no cleanup needed (local files only)
+# Python chapters (1–5): no Docker cleanup needed (local files only)
 
-# Docker chapters:
-cd chapter_6_docker
-docker compose down -v
-
-cd chapter_7_reliability
-docker compose down -v
+# Docker-backed Kafka labs — stop each Compose project (from repo root):
+KAFKA=systems_labs/kafka
+for dir in chapter_6_docker chapter_7_reliability chapter_8_consumer_groups \
+           chapter_9_lag_ops chapter_10_compaction chapter_12_schema_registry \
+           chapter_14_ordering chapter_15_dlq chapter_16_connect chapter_17_ksqldb; do
+  ( cd "$KAFKA/$dir" && docker compose down -v )
+done
 ```
 
 ## Further Learning
@@ -311,29 +485,16 @@ docker compose down -v
 
 ## Roadmap: Next Concepts to Explore
 
-Here are 5 advanced topics to continue your journey beyond the basics:
+Chapters **8**, **10**, **12**, **9**, **14**, **15**, **16**, and **17** now cover groups, compaction, schemas, lag, ordering, DLQ, Connect, and ksqlDB. Ideas to layer on next:
 
-### 2. Idempotence (No More Duplicates)
-**The Problem:** In distributed systems, "I sent the message, the server received it, but the network crashed before the server could tell me 'Success'. So I sent it again." Now you have two orders for the same pizza.
+### 1. Idempotence & EOS
+**Problem:** Retries after an ambiguous produce response can duplicate records on the broker.
 
-**The Concept:** Kafka has a "Producer ID" and "Sequence Number." If the producer sends the same message twice, the broker sees the sequence number is the same and silently drops the duplicate.
+**Idea:** Enable idempotent producers (`enable.idempotence=true`) and, when needed, transactions for read–process–write workflows.
 
-**The Learning:** Turn on `enable.idempotence=true`. This is what makes Kafka "Exactly Once" (almost) possible.
+**Experiment:** Enable idempotence in a Docker-backed producer and simulate retries.
 
-**Experiment:** Create a producer with idempotence enabled. Simulate a network retry and observe that duplicate messages are not written to the log.
-
----
-
-### 3. Log Compaction (The "Latest Truth" Database)
-**The Concept:** Most people think Kafka deletes data after 7 days. But there is a second mode called **Compaction**. If you send `User_1: "Lives in NY"` and then `User_1: "Lives in CA"`, Kafka will eventually delete the "NY" message and only keep the latest "CA" message for that key.
-
-**Why It Matters:** This turns Kafka from a "stream of events" into a **Database**. You can store the current state of 1 million customers in a topic, and it will never grow too large because it only keeps the "latest truth" for each customer ID.
-
-**The Experiment:** Create a topic with `cleanup.policy=compact`. Send 10 updates for the same key. Wait for the log cleaner to run (or force it) and see only the last message remains. Observe the `.log` file shrink as old keys are removed.
-
----
-
-### 4. ksqlDB (SQL for Streams)
+### 2. ksqlDB (SQL for Streams)
 **The Aha! Moment:** If you know SQL, this will be your "Aha!" moment. Usually, to process data, you write a Java/Python app. With ksqlDB, you write SQL queries that run forever as data flows in.
 
 **Standard SQL:** "Tell me the average price of orders right now (in the table)."
@@ -346,17 +507,8 @@ Here are 5 advanced topics to continue your journey beyond the basics:
 3. Write a SQL query: `CREATE TABLE user_clicks AS SELECT user_id, COUNT(*) AS cnt FROM clicks WINDOW TUMBLING (SIZE 5 MINUTES) GROUP BY user_id;`
 4. As you produce messages into Kafka, watch the SQL results update instantly on your screen
 
----
-
-### 5. Consumer Lag (The "Health" Metric)
-**The Concept:** In a traditional app, you monitor CPU and RAM. In Kafka, the most important metric is **Lag**. Lag is the distance between the last message produced and the last message read by your consumer.
-
-- **Lag = 0:** You are real-time.
-- **Lag = 1,000,000:** Your consumer is failing or too slow, and your system is "falling behind."
-
-**The Learning:** Use a tool like Kafka UI, Cerebro, or `kafka-consumer-groups.sh` to visualize the lag. Understanding lag is how you know when to scale your consumer group. It's the heartbeat of a healthy streaming system.
-
-**The Experiment:** Start a slow consumer (add `time.sleep(2)` between messages), produce messages rapidly, and watch the lag graph climb. Then add more consumers to the same group and see the lag drop as work is distributed.
+### 3. Connect, Streams APIs, and Dashboards
+Kafka **Connect**, **Kafka Streams**, and UIs (**Kafka UI**, Grafana lag panels) compose the pieces you exercised here — groups, compaction, schemas, lag — into long-running integrations.
 
 ---
 
