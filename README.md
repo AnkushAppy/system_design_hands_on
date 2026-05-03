@@ -15,6 +15,7 @@ Hands-on exercises and reference stacks for **system design** topics: runnable s
 | [**`databases/redis`**](databases/redis/) | Docker Compose stack: Nginx LB, FastAPI apps, single Redis, Prometheus, Grafana, cAdvisor, Locust; metrics export & chart scripts | [What & why](databases/redis/README.md) · [How to run](databases/redis/SETUP.md) |
 | [**`databases/redis-cluster`**](databases/redis-cluster/) | Same HTTP/LB/app/observability pattern with **6-node Redis Cluster** (3 primaries + 3 replicas), multi-target `redis_exporter`, cluster bootstrap job | [What & why](databases/redis-cluster/README.md) · [How to run](databases/redis-cluster/SETUP.md) |
 | [**`databases/pg-vs-cassandra-writes`**](databases/pg-vs-cassandra-writes/) | Single API: **`POST /pg/events`** vs **`POST /cassandra/events`**, Locust write stress (B-tree vs LSM intuition) | [What & why](databases/pg-vs-cassandra-writes/README.md) · [How to run](databases/pg-vs-cassandra-writes/SETUP.md) |
+| [**`language_learning/learn_python`**](language_learning/learn_python/) | Small **Python** sandboxes: **FastAPI** + SQLAlchemy dependency injection, **concurrency**, **creational design patterns** (Pydantic demos under `design_pattern/creational/`), installer examples | [Layout, deps, run commands](language_learning/learn_python/README.md) |
 
 Suggested Kafka learning path:
 
@@ -24,6 +25,8 @@ Suggested Kafka learning path:
 
 ## Latest Additions
 
+- **`language_learning/learn_python/design_pattern/creational/`**: runnable **creational** pattern notes — **`factory.py`**, **`abstract_factory.py`**, **`builder.py`**, **`prototype.py`**, **`singleton.py`**, and **`intered.py`** (interning / shared immutable instances with `weakref`). These modules use **Pydantic** models; install with `pip install pydantic` (see **Requirements**).
+- **`language_learning/learn_python`**: FastAPI + SQLAlchemy dependency injection under [`fastapi/dependency_injection/`](language_learning/learn_python/fastapi/dependency_injection/) — **`main.py`** (sync SQLite) and **`async_main.py`** (async SQLite, list/create users). Concurrency exercises under [`concurrency/`](language_learning/learn_python/concurrency/). **`test.db`** and virtualenvs are ignored from root `.gitignore`.
 - Added **search evaluation metrics** module at `agentic_ai/metrices` with runnable Python examples:
   - `mean_reciprocal_rank/mmr.py`
   - `ndcg/ndcg.py`
@@ -45,6 +48,8 @@ Suggested Kafka learning path:
 ## Requirements
 
 Varies by subproject. Start from the linked **SETUP** in each area (e.g. Docker for the Redis stack, optional host Python for Locust).
+
+For **`language_learning/learn_python`**, see [that folder’s README](language_learning/learn_python/README.md) (per-topic venvs, installs, and run commands).
 
 ---
 
