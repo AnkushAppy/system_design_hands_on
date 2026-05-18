@@ -1,0 +1,5 @@
+<clickhouse>
+  <!-- Ensure ClickHouse binds on IPv4 (Docker/host) even when IPv6 is disabled. -->
+  <listen_host>0.0.0.0</listen_host>
+</clickhouse>
+

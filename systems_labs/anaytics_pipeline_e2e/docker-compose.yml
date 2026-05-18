@@ -1,0 +1,111 @@
+version: "3.8"
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: ap-e2e-redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092" # Kafka API (external)
+      - "9644:9644" # Admin API (optional)
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "rpk cluster health --exit-when-healthy >/dev/null 2>&1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: ap-e2e-clickhouse
+    ports:
+      - "8123:8123" # HTTP interface
+      - "9000:9000" # Native client interface
+    environment:
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse_config:/etc/clickhouse-server/config.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "clickhouse-client --user user --password password --query 'SELECT 1' >/dev/null 2>&1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  fastapi-producer:
+    build: ./producer_app
+    container_name: ap-e2e-producer
+    ports:
+      - "8010:8000"
+    environment:
+      REDPANDA_BROKERS: redpanda:9092
+      ANALYTICS_TOPIC: analytics.events
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    restart: on-failure
+
+  bytewax-processor:
+    build: ./processor_app
+    container_name: ap-e2e-processor
+    environment:
+      REDPANDA_BROKERS: redpanda:9092
+      ANALYTICS_TOPIC: analytics.events
+      ANALYTICS_GROUP_ID: analytics-pipeline-e2e
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_TABLE: events
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+  fastapi-consumer:
+    build: ./consumer_app
+    container_name: ap-e2e-consumer
+    ports:
+      - "8011:8001"
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_TABLE: events
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  clickhouse_data:
+
